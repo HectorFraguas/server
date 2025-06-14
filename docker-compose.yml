@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   mongo:
-    image: mongo:6
+    image: mongo:4.4
     container_name: mongo
     restart: always
     ports:
@@ -68,15 +68,15 @@ services:
     depends_on:
       - mongo
 
-  api_checker:
-    build: ./scripts/api_checker
-    container_name: api_checker
-    restart: always
-    environment:
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}
-      - SERVER_NAME=${SERVER_NAME}
-    depends_on:
-      - mongo
+#  api_checker:
+#    build: ./scripts/api_checker
+#    container_name: api_checker
+#    restart: always
+#    environment:
+#      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}
+#      - SERVER_NAME=${SERVER_NAME}
+#    depends_on:
+#      - mongo
 
   cronjob:
     build: ./scripts/cronjob

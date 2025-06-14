@@ -30,8 +30,13 @@ else
 fi
 
 # Paso 3: Levantar servicios con docker-compose
-echo "[INFO] Levantando servicios con docker-compose..."
-docker-compose up -d
+read -p "¿Quieres levantar todos los servicios ahora? (s/n): " launch
+if [[ $launch == "s" ]]; then
+  echo "[INFO] Levantando servicios con docker-compose..."
+  docker-compose up -d
+else
+  echo "[OK] Saltando arranque de servicios por elección del usuario."
+fi
 
 # Paso 4: Instalar cronjob del sistema para backup
 if [ -f "./backup/setup_cron.sh" ]; then
