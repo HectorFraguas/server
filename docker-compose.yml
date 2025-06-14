@@ -24,8 +24,10 @@ services:
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
       - DB_TYPE=sqlite
-      - N8N_HOST=0.0.0.0
+      - N8N_HOST=n8n.${DUCKDNS_DOMAIN}.duckdns.org
       - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_SSL_SKIP_VALIDATION=true
     volumes:
       - ./data/n8n:/home/node/.n8n
     env_file:
@@ -34,7 +36,6 @@ services:
       - "nginx.proxy=true"
       - "nginx.domain=n8n.${DUCKDNS_DOMAIN}.duckdns.org"
       - "nginx.target_port=5678"
-
 
   portainer:
     image: portainer/portainer-ce
@@ -45,6 +46,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data/portainer:/data
+    labels:
+      - "nginx.proxy=true"
+      - "nginx.domain=portainer.${DUCKDNS_DOMAIN}.duckdns.org"
+      - "nginx.target_port=9000"
 
   bot1:
     build: ./bots/bot1
@@ -97,3 +102,7 @@ services:
     volumes:
       - ./data/nginx:/data
       - ./data/nginx/letsencrypt:/etc/letsencrypt
+    labels:
+      - "nginx.proxy=true"
+      - "nginx.domain=admin.${DUCKDNS_DOMAIN}.duckdns.org"
+      - "nginx.target_port=81"
