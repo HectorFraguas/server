@@ -21,14 +21,11 @@ services:
     environment:
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-      - DB_TYPE=mongodb
-      - DB_MONGODB_CONNECTION_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}?authSource=admin
+      - DB_TYPE=sqlite
       - N8N_HOST=n8n.${DUCKDNS_DOMAIN}.duckdns.org
       - N8N_PORT=5678
     volumes:
       - ./data/n8n:/home/node/.n8n
-    depends_on:
-      - mongo
     env_file:
       - ./n8n/docker.env
     labels:
@@ -67,16 +64,6 @@ services:
       - SERVER_NAME=${SERVER_NAME}
     depends_on:
       - mongo
-
-#  api_checker:
-#    build: ./scripts/api_checker
-#    container_name: api_checker
-#    restart: always
-#    environment:
-#      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}
-#      - SERVER_NAME=${SERVER_NAME}
-#    depends_on:
-#      - mongo
 
   cronjob:
     build: ./scripts/cronjob
