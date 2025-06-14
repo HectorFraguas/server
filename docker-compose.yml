@@ -1,0 +1,109 @@
+version: "3.8"
+
+services:
+
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: always
+    environment:
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - DB_TYPE=mongodb
+      - DB_MONGODB_CONNECTION_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}?authSource=admin
+      - N8N_HOST=n8n.${DUCKDNS_DOMAIN}.duckdns.org
+      - N8N_PORT=5678
+    volumes:
+      - ./data/n8n:/home/node/.n8n
+    depends_on:
+      - mongo
+    env_file:
+      - ./n8n/docker.env
+    labels:
+      - "nginx.proxy=true"
+      - "nginx.domain=n8n.${DUCKDNS_DOMAIN}.duckdns.org"
+      - "nginx.target_port=5678"
+
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/portainer:/data
+
+  bot1:
+    build: ./bots/bot1
+    container_name: bot1
+    restart: always
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_BOT1}?authSource=admin
+      - SERVER_NAME=${SERVER_NAME}
+    depends_on:
+      - mongo
+
+  bot2:
+    build: ./bots/bot2
+    container_name: bot2
+    restart: always
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}
+      - SERVER_NAME=${SERVER_NAME}
+    depends_on:
+      - mongo
+
+  api_checker:
+    build: ./scripts/api_checker
+    container_name: api_checker
+    restart: always
+    environment:
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}
+      - SERVER_NAME=${SERVER_NAME}
+    depends_on:
+      - mongo
+
+  cronjob:
+    build: ./scripts/cronjob
+    container_name: cronjob
+    restart: always
+    volumes:
+      - ./scripts/cronjob:/cron
+
+  duckdns:
+    image: alpine
+    container_name: duckdns
+    restart: always
+    volumes:
+      - ./duckdns:/scripts
+    command: /bin/sh -c "while true; do /scripts/duck.sh; sleep 300; done"
+    environment:
+      - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN}
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+
+  nginx:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
+    volumes:
+      - ./data/nginx:/data
+      - ./data/nginx/letsencrypt:/etc/letsencrypt

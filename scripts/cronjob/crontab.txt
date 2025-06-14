@@ -1,0 +1,2 @@
+* * * * * python3 /cronjob/script1/main.py
+*/5 * * * * python3 /cronjob/script2/main.py
